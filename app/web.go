@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -94,11 +95,23 @@ func post_note(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	dte, ok := r.Form["days_until_expire"]
+	if !ok {
+		write_error(w, "Missing days_until_expire in request")
+		return
+	}
+
+	ndays, err := strconv.Atoi(dte[0])
+	if err != nil || ndays < 0 || ndays > max_days {
+		write_error(w, "Invalid number of days")
+		return
+	}
+
 	n := Note{
 		Content:        content[0],
 		AllowedIPRange: allowed_ips[0],
 		Created:        time.Now(),
-		ExpireAfter:    time.Hour * 24,
+		ExpireAfter:    time.Duration(ndays) * 24 * time.Hour,
 	}
 
 	id, err := imdb.push(n)

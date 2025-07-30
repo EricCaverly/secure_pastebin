@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -11,6 +12,22 @@ type InMemoryDB struct {
 	mtx         sync.Mutex
 	notes       map[string]Note
 	total_count int
+}
+
+func (db *InMemoryDB) trim() int {
+	db.mtx.Lock()
+	defer db.mtx.Unlock()
+
+	count := 0
+
+	for k, v := range db.notes {
+		if time.Now().After((v.Created.Add(v.ExpireAfter))) {
+			delete(db.notes, k)
+			count++
+		}
+	}
+
+	return count
 }
 
 func (db *InMemoryDB) push(note Note) (string, error) {

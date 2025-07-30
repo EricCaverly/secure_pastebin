@@ -87,6 +87,7 @@ function setup_note_creation() {
         let msg = $("#new_content").val();
         let psk = $("#new_passphrase").val();
         let ipr = $("#new_ip_restriction").val();
+        let exp = $("#new_expiry").val();
 
         let ciphertext = enc_message(msg, psk);
 
@@ -96,6 +97,7 @@ function setup_note_creation() {
         api_req("POST", "note", {
             "content": ciphertext, 
             "allowed_ips": ipr,
+            "days_until_expire": exp,
         }, (result) => {
             console.log(result);
             loading.hide();
@@ -115,6 +117,7 @@ function setup_note_creation() {
                 result_body.append(`&#x2713; Note available <a href="${url}">here</a> `);
                 result_body.append(btn);
             } else {
+                create_note.show();
                 result_body.html(`&#x274c; Error: ${result.message}`);
             }
         });
@@ -161,6 +164,15 @@ function setup_note_retrieval(uuid) {
 
 
 $(() => {
+    // Build UI Elements
+    const selbox = $("#new_expiry");
+    for (let i=1; i<16; ++i) {
+        const opt = document.createElement("option")
+        opt.value = i;
+        opt.appendChild(document.createTextNode(`${i} day(s)`))
+        selbox.append(opt);
+    }
+
     // Check if the UUID is specified as a Query Parameter
     const params = new Proxy(new URLSearchParams(window.location.search), {
         get: (searchParams, prop) => searchParams.get(prop),
