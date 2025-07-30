@@ -1,0 +1,16 @@
+#main_container {
+    margin-top: 100px;
+    
+}
+
+.note_content {
+    height: 150px;
+}
+
+footer {
+    margin: auto;
+    position: absolute;
+    bottom: 0;
+    text-align: center;
+    width: 100%;
+}

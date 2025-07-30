@@ -1,0 +1,112 @@
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"log"
+	"net/http"
+	"time"
+)
+
+type Resp struct {
+	Success bool   `json:"success"`
+	Data    any    `json:"data"`
+	Message string `json:"message"`
+}
+
+func write_error(w http.ResponseWriter, msg string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	bdy := Resp{
+		Success: false,
+		Message: msg,
+		Data:    nil,
+	}
+
+	d, _ := json.Marshal(bdy)
+
+	w.Write(d)
+}
+
+func write_success(w http.ResponseWriter, msg string, data any) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	bdy := Resp{
+		Success: true,
+		Message: msg,
+		Data:    data,
+	}
+
+	d_buff, err := json.Marshal(bdy)
+	if err != nil {
+		write_error(w, "Failed to marshal data")
+		log.Printf("Failed to format a success body: %s\n", err.Error())
+		return
+	}
+
+	w.Write(d_buff)
+}
+
+func get_note(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	log.Printf("get_note called from %s on uuid:%s\n", r.RemoteAddr, id)
+
+	n, err := imdb.fetch(id)
+	if err != nil {
+		write_error(w, fmt.Sprintf("Failed to get note: %s", err.Error()))
+		return
+	}
+
+	// if n.AllowedIPRange
+
+	write_success(w, "Found note", n)
+}
+
+func pop_note(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	log.Printf("get_note called from %s on uuid:%s\n", r.RemoteAddr, id)
+
+	n, err := imdb.pop(id)
+	if err != nil {
+		write_error(w, fmt.Sprintf("Failed to get note: %s", err.Error()))
+		return
+	}
+
+	write_success(w, "Popped note", n)
+}
+
+func post_note(w http.ResponseWriter, r *http.Request) {
+	log.Printf("post_note called from %s\n", r.RemoteAddr)
+
+	r.ParseForm()
+
+	content, ok := r.Form["content"]
+	if !ok {
+		write_error(w, "Missing content in request")
+		return
+	}
+
+	allowed_ips, ok := r.Form["allowed_ips"]
+	if !ok {
+		write_error(w, "Missing allowed_ips in request")
+		return
+	}
+
+	n := Note{
+		Content:        content[0],
+		AllowedIPRange: allowed_ips[0],
+		Created:        time.Now(),
+		ExpireAfter:    time.Hour * 24,
+	}
+
+	id, err := imdb.push(n)
+	if err != nil {
+		log.Printf("failed to push note onto db: %s\n", err.Error())
+		write_error(w, fmt.Sprintf("Failed to create note: %s", err.Error()))
+		return
+	}
+
+	write_success(w, "Note created!", id)
+}
