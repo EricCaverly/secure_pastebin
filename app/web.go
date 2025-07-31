@@ -1,3 +1,9 @@
+/*********************************
+ *  File     : web.go
+ *  Purpose  : Backend web logic for API endpoints
+ *  Authors  : Eric Caverly
+ */
+
 package main
 
 import (

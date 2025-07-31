@@ -1,3 +1,10 @@
+/*********************************
+ *  File     : imbd.go
+ *  Purpose  : In Memory DataBase
+ *             Stores notes within RAM. If expansion is required in the future, replace with redis
+ *  Authors  : Eric Caverly
+ */
+
 package main
 
 import (

@@ -1,3 +1,11 @@
+/*********************************
+ *  File     : index.js
+ *  Purpose  : Front end logic including UI, AJAX calls to backend, and encrypting / descrypting notes
+ *             Encryption / Decryption is handled here to provide a true end-to-end encryption schema
+ *  Authors  : Eric Caverly 
+ *           : Shubham Khan (enc_message, dec_message)
+ */
+
 
 // Effectively ripped from https://dev.to/shubhamkhan/beginners-guide-to-aes-encryption-and-decryption-in-javascript-using-cryptojs-592
 function enc_message(message, psk) {
@@ -54,6 +62,7 @@ function dec_message(encText, psk) {
 }
 
 
+// Specialized wrapper for making AJAX requests to the backend
 function api_req(method, endpoint, data, success_func) {
     const opt = {
         url: `/api/${endpoint}`,
@@ -73,21 +82,29 @@ function api_req(method, endpoint, data, success_func) {
 }
 
 
+// Build UI for when creating a note
 function setup_note_creation() {
     const form = $("#note_form");
     const loading = $("#loading_card");
     const create_note = $("#create_card");
     const result_card = $("#result_card");
     const result_body = $("#result_body");
+    const new_expiry = $("#new_expiry");
 
-    // No need to fetch any data right away since we are making the note
+    for (let i=1; i<16; ++i) {
+        const opt = document.createElement("option")
+        opt.value = i;
+        opt.appendChild(document.createTextNode(`${i} day(s)`))
+        new_expiry.append(opt);
+    }
+
     form.submit((e) => {
         e.preventDefault();
 
         let msg = $("#new_content").val();
         let psk = $("#new_passphrase").val().trim();
         let ipr = $("#new_ip_restriction").val().trim();
-        let exp = $("#new_expiry").val();
+        let exp = new_expiry.val();
 
         let ciphertext = enc_message(msg, psk);
 
@@ -127,6 +144,7 @@ function setup_note_creation() {
 }
 
 
+// Build UI when opening / decrypting a note
 function setup_note_retrieval(uuid) {
     const loading = $("#loading_card");
     const dec_card = $("#decrypt_card");
@@ -142,9 +160,7 @@ function setup_note_retrieval(uuid) {
                 loading.show();
                 
                 let psk = $("#view_passphrase").val().trim();
-
                 let msg = dec_message(result.data.content, psk);
-                console.log(msg);
 
                 result_body.empty();
                 
@@ -157,13 +173,13 @@ function setup_note_retrieval(uuid) {
                     pre.appendChild(document.createTextNode(msg));
                     code.appendChild(pre);
                     result_body.append(code);
-
                 }
 
                 loading.hide();
                 result_back.hide();
                 result_card.show();
             });
+            
             loading.hide();
             dec_card.show();
         } else {
@@ -177,15 +193,6 @@ function setup_note_retrieval(uuid) {
 
 
 $(() => {
-    // Build UI Elements
-    const selbox = $("#new_expiry");
-    for (let i=1; i<16; ++i) {
-        const opt = document.createElement("option")
-        opt.value = i;
-        opt.appendChild(document.createTextNode(`${i} day(s)`))
-        selbox.append(opt);
-    }
-
     // Check if the UUID is specified as a Query Parameter
     const params = new Proxy(new URLSearchParams(window.location.search), {
         get: (searchParams, prop) => searchParams.get(prop),

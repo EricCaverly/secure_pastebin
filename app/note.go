@@ -1,3 +1,9 @@
+/*********************************
+ *  File     : note.go
+ *  Purpose  : Defines what a note is
+ *  Authors  : Eric Caverly
+ */
+
 package main
 
 import "time"
