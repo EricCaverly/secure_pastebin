@@ -10,7 +10,7 @@ import (
 
 const (
 	max_days      = 15
-	trim_interval = 4 * time.Hour
+	trim_interval = 30 * time.Minute
 )
 
 var imdb InMemoryDB = InMemoryDB{
@@ -18,7 +18,7 @@ var imdb InMemoryDB = InMemoryDB{
 }
 
 func main() {
-
+	// Setup the scheduler for running trim jobs to actually expire notes
 	s, err := gocron.NewScheduler()
 	if err != nil {
 		log.Fatalf("could not start gocron: %s\n", err.Error())
@@ -33,7 +33,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("unable to create job: %s\n", err.Error())
 	}
+	s.Start()
 
+	// Create the HTTP server
 	r := http.NewServeMux()
 
 	r.Handle("/", http.FileServer(http.Dir("./www")))

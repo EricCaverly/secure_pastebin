@@ -133,6 +133,7 @@ function setup_note_retrieval(uuid) {
     const dec_card = $("#decrypt_card");
     const result_card = $("#result_card");
     const result_body = $("#result_body");
+    const result_back = $("#result_back");
 
     // Obtain the note, rendering a field for the passphrase if the note eixsts, or an error
     api_req("GET", `note/${uuid}`, {}, (result) => {
@@ -147,15 +148,28 @@ function setup_note_retrieval(uuid) {
                 console.log(msg);
 
                 result_body.empty();
-                result_body.html(document.createTextNode(msg));
+                
+                if (msg == "" || msg == null) {
+                    result_body.html(`&#x274c; Invalid passphrase`);
+                } else {
+                    result_body.html("<h5>Note Content:</h5>")
+                    const code = document.createElement("code")
+                    const pre = document.createElement("pre")
+                    pre.appendChild(document.createTextNode(msg));
+                    code.appendChild(pre);
+                    result_body.append(code);
+
+                }
 
                 loading.hide();
+                result_back.hide();
                 result_card.show();
             });
             loading.hide();
             dec_card.show();
         } else {
             loading.hide();
+            result_back.show();
             result_card.show();
             result_body.html(`&#x274c; Error: ${result.message}`);
         }

@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -60,7 +61,18 @@ func get_note(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// if n.AllowedIPRange
+	remote_addr := strings.Split(r.RemoteAddr, ":")
+
+	allowed, err := within_ranges(remote_addr[0], n.AllowedIPRange)
+	if err != nil {
+		write_error(w, "Failed to check if IP was valid")
+		return
+	}
+
+	if !allowed {
+		write_error(w, "You are not allowed to access this note! (IP address forbidden)")
+		return
+	}
 
 	write_success(w, "Found note", n)
 }
@@ -92,6 +104,11 @@ func post_note(w http.ResponseWriter, r *http.Request) {
 	allowed_ips, ok := r.Form["allowed_ips"]
 	if !ok {
 		write_error(w, "Missing allowed_ips in request")
+		return
+	}
+
+	if err := check_valid_ranges(allowed_ips[0]); err != nil {
+		write_error(w, fmt.Sprintf("Invalid IP range (%s). Please enter as 1.1.1.0/24, 2.2.0.0/16", err.Error()))
 		return
 	}
 
