@@ -85,8 +85,8 @@ function setup_note_creation() {
         e.preventDefault();
 
         let msg = $("#new_content").val();
-        let psk = $("#new_passphrase").val();
-        let ipr = $("#new_ip_restriction").val();
+        let psk = $("#new_passphrase").val().trim();
+        let ipr = $("#new_ip_restriction").val().trim();
         let exp = $("#new_expiry").val();
 
         let ciphertext = enc_message(msg, psk);
@@ -99,7 +99,6 @@ function setup_note_creation() {
             "allowed_ips": ipr,
             "days_until_expire": exp,
         }, (result) => {
-            console.log(result);
             loading.hide();
             result_card.show();
             
@@ -142,7 +141,7 @@ function setup_note_retrieval(uuid) {
                 e.preventDefault();
                 loading.show();
                 
-                let psk = $("#view_passphrase").val();
+                let psk = $("#view_passphrase").val().trim();
 
                 let msg = dec_message(result.data.content, psk);
                 console.log(msg);

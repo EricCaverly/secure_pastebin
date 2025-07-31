@@ -87,6 +87,11 @@ func post_note(w http.ResponseWriter, r *http.Request) {
 		write_error(w, "Missing content in request")
 		return
 	}
+	log.Printf("content size: %d", len(content[0]))
+	if len(content[0]) > max_note_size_bytes {
+		write_error(w, fmt.Sprintf("Note too large! Max size: %d bytes", max_note_size_bytes))
+		return
+	}
 
 	allowed_ips, ok := r.Form["allowed_ips"]
 	if !ok {

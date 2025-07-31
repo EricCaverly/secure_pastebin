@@ -9,8 +9,9 @@ import (
 )
 
 const (
-	max_days      = 15
-	trim_interval = 30 * time.Minute
+	max_days            = 15
+	trim_interval       = 30 * time.Minute
+	max_note_size_bytes = 1024 * 30 // 30 kB
 )
 
 var imdb InMemoryDB = InMemoryDB{
