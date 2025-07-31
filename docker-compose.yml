@@ -1,0 +1,11 @@
+services:
+  sbp:
+    image: spb
+    networks:
+      - spb_net
+    ports:
+      - 8080:8080
+
+networks:
+  spb_net:
+    NULL
