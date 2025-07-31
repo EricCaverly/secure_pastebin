@@ -34,6 +34,10 @@ func (db *InMemoryDB) push(note Note) (string, error) {
 	db.mtx.Lock()
 	defer db.mtx.Unlock()
 
+	if db.total_count > max_notes {
+		return "", fmt.Errorf("max amount of notes reached (%d)", max_notes)
+	}
+
 	id := uuid.NewString()
 	db.notes[id] = note
 
