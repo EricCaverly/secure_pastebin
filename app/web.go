@@ -77,19 +77,6 @@ func get_note(w http.ResponseWriter, r *http.Request) {
 	write_success(w, "Found note", n)
 }
 
-func pop_note(w http.ResponseWriter, r *http.Request) {
-	id := r.PathValue("id")
-	log.Printf("get_note called from %s on uuid:%s\n", r.RemoteAddr, id)
-
-	n, err := imdb.pop(id)
-	if err != nil {
-		write_error(w, fmt.Sprintf("Failed to get note: %s", err.Error()))
-		return
-	}
-
-	write_success(w, "Popped note", n)
-}
-
 func post_note(w http.ResponseWriter, r *http.Request) {
 	log.Printf("post_note called from %s\n", r.RemoteAddr)
 

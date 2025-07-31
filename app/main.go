@@ -48,5 +48,4 @@ func main() {
 	if err := http.ListenAndServe(addr, r); err != nil {
 		log.Fatalf("Web server crashed: %s\n", err.Error())
 	}
-
 }
