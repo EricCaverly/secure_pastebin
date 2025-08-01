@@ -1,5 +1,5 @@
 services:
-  sbp:
+  spb-web:
     image: ericcaverly/spb:latest
     networks:
       - spb_net
