@@ -12,7 +12,6 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -67,9 +66,12 @@ func get_note(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	remote_addr := strings.Split(r.RemoteAddr, ":")
+	remote_addr := r.Header.Get("X-Real-Ip")
+	log.Printf("IP from Traefik: %s\n", remote_addr)
 
-	allowed, err := within_ranges(remote_addr[0], n.AllowedIPRange)
+	// remote_addr := strings.Split(r.RemoteAddr, ":")
+
+	allowed, err := within_ranges(remote_addr, n.AllowedIPRange)
 	if err != nil {
 		write_error(w, "Failed to check if IP was valid")
 		return
