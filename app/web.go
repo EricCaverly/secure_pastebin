@@ -66,6 +66,10 @@ func get_note(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	for k, v := range r.Header {
+		log.Printf("%s => %s\n", k, v)
+	}
+
 	remote_addr := r.Header.Get("X-Real-Ip")
 	log.Printf("IP from Traefik: %s\n", remote_addr)
 
