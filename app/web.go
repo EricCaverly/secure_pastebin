@@ -7,12 +7,16 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type Resp struct {
@@ -60,7 +64,7 @@ func get_note(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	log.Printf("get_note called from %s on uuid:%s\n", r.RemoteAddr, id)
 
-	n, err := imdb.fetch(id)
+	n, err := rc.HGetAll(context.Background(), id).Result()
 	if err != nil {
 		write_error(w, fmt.Sprintf("Failed to get note: %s", err.Error()))
 		return
@@ -68,11 +72,18 @@ func get_note(w http.ResponseWriter, r *http.Request) {
 
 	// If using a reverse proxy, which is assumed... Otherwise use r.RemoteAddr
 	remote_addr := r.Header.Get("X-Real-Ip")
+	if remote_addr == "" {
+		remote_addr = strings.Split(r.RemoteAddr, ":")[0]
+	}
 	log.Printf("IP from Traefik: %s\n", remote_addr)
 
-	// remote_addr := strings.Split(r.RemoteAddr, ":")
+	allowed_ips, ok := n["allowed_ips"]
+	if !ok {
+		write_error(w, "Note not found")
+		return
+	}
 
-	allowed, err := within_ranges(remote_addr, n.AllowedIPRange)
+	allowed, err := within_ranges(remote_addr, allowed_ips)
 	if err != nil {
 		write_error(w, "Failed to check if IP was valid")
 		return
@@ -96,7 +107,7 @@ func post_note(w http.ResponseWriter, r *http.Request) {
 		write_error(w, "Missing content in request")
 		return
 	}
-	log.Printf("content size: %d", len(content[0]))
+
 	if len(content[0]) > max_note_size_bytes {
 		write_error(w, fmt.Sprintf("Note too large! Max size: %d bytes", max_note_size_bytes))
 		return
@@ -128,16 +139,16 @@ func post_note(w http.ResponseWriter, r *http.Request) {
 	n := Note{
 		Content:        content[0],
 		AllowedIPRange: allowed_ips[0],
-		Created:        time.Now(),
-		ExpireAfter:    time.Duration(ndays) * 24 * time.Hour,
 	}
 
-	id, err := imdb.push(n)
-	if err != nil {
-		log.Printf("failed to push note onto db: %s\n", err.Error())
-		write_error(w, fmt.Sprintf("Failed to create note: %s", err.Error()))
-		return
-	}
+	id := uuid.NewString()
+
+	rc.HSet(context.Background(), id, n)
+	rc.Expire(context.Background(), id, time.Duration(ndays)*24*time.Hour)
 
 	write_success(w, "Note created!", id)
+}
+
+func health_check(w http.ResponseWriter, _ *http.Request) {
+	write_success(w, "Alive", nil)
 }

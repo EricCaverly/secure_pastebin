@@ -1,11 +1,45 @@
 services:
   sbp:
-    image: spb
+    image: ericcaverly/spb:latest
     networks:
       - spb_net
-    ports:
-      - 8080:8080
+      - external_services
+    # ports:
+    #   - 8080:8080
+    deploy:
+      mode: replicated
+      replicas: 2
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.spb.rule=Host(`spb.ericc.ninja`)"
+        - "traefik.http.routers.spb.entrypoints=websecuredmz"
+        - "traefik.http.services.spb.loadbalancer.server.port=8080"
+        - "traefik.http.routers.spb.service=spb"
+        - "traefik.http.routers.spb.tls=true"
+        - "traefik.http.routers.spb.tls.certresolver=production"
+        - "traefik.docker.network=external_services"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health"]
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
+      
+
+  spb-db:
+    image: redis:alpine3.21
+    hostname: db.spb.arpa
+    networks:
+      - spb_net
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
 
 networks:
   spb_net:
     NULL
+  external_services:
+    external: true

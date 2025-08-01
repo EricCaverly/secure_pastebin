@@ -126,11 +126,12 @@ function setup_note_creation() {
                 btn.setAttribute("class", "btn btn-primary");
                 btn.innerHTML = `&#x1F4CB;`;
                 btn.addEventListener("click", () => {
-                    navigator.clipboard.writeText(url)
+                    navigator.clipboard.writeText(url);
+                    result_body.append("<i>Copied to clipboard!</i>");
                 });
 
                 result_body.empty();
-                result_body.append(`&#x2713; Note available <a href="${url}">here</a> `);
+                result_body.append(`&#x2713; Note available <a class="text-secondary" href="${url}">here</a> `);
                 result_body.append(btn);
             } else {
                 create_note.show();

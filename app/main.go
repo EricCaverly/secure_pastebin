@@ -1,6 +1,6 @@
 /*********************************
  *  File     : main.go
- *  Purpose  : Backend entry point. Sets up scheduler and web server
+ *  Purpose  : Backend entry point
  *  Authors  : Eric Caverly
  */
 
@@ -9,40 +9,23 @@ package main
 import (
 	"log"
 	"net/http"
-	"time"
 
-	"github.com/go-co-op/gocron/v2"
+	"github.com/redis/go-redis/v9"
 )
 
 const (
 	max_days            = 15
-	trim_interval       = 30 * time.Minute
 	max_note_size_bytes = 1024 * 30 // 30 kB
-	max_notes           = 34000     // allows just under 1GB ram usage assuming 30kB notes
 )
 
-var imdb InMemoryDB = InMemoryDB{
-	notes: map[string]Note{},
-}
+var rc = redis.NewClient(&redis.Options{
+	Addr:     "db.spb.arpa:6379",
+	Password: "",
+	DB:       0,
+	Protocol: 2,
+})
 
 func main() {
-	// Setup the scheduler for running trim jobs to actually expire notes
-	s, err := gocron.NewScheduler()
-	if err != nil {
-		log.Fatalf("could not start gocron: %s\n", err.Error())
-	}
-
-	_, err = s.NewJob(gocron.DurationJob(trim_interval),
-		gocron.NewTask(func() {
-			log.Printf("starting trim job...\n")
-			count := imdb.trim()
-			log.Printf("trim job complete. %d notes removed\n", count)
-		}))
-	if err != nil {
-		log.Fatalf("unable to create job: %s\n", err.Error())
-	}
-	s.Start()
-
 	// Create the HTTP server
 	r := http.NewServeMux()
 
@@ -50,6 +33,7 @@ func main() {
 
 	r.HandleFunc("GET /api/note/{id}", get_note)
 	r.HandleFunc("POST /api/note", post_note)
+	r.HandleFunc("GET /api/health", health_check)
 
 	addr := ":8080"
 	log.Printf("Started listening on %s\n", addr)
